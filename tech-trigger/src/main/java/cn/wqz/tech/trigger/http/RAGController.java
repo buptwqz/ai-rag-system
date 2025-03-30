@@ -86,62 +86,62 @@ public class RAGController implements IRAGService {
         return Response.<String>builder().code("0000").info("调用成功").build();
     }
 
-//    @RequestMapping(value = "analyze_git_repository", method = RequestMethod.POST)
-//    @Override
-//    public Response<String> analyzeGitRepository(@RequestParam("repoUrl") String repoUrl, @RequestParam("userName") String userName, @RequestParam("token") String token) throws Exception {
-//        String localPath = "./git-cloned-repo";
-//        String repoProjectName = extractProjectName(repoUrl);
-//        log.info("克隆路径：{}", new File(localPath).getAbsolutePath());
-//
-//        FileUtils.deleteDirectory(new File(localPath));
-//
-//        Git git = Git.cloneRepository()
-//                .setURI(repoUrl)
-//                .setDirectory(new File(localPath))
-//                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(userName, token))
-//                .call();
-//
-//        Files.walkFileTree(Paths.get(localPath), new SimpleFileVisitor<>() {
-//            @Override
-//            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//                log.info("{} 遍历解析路径，上传知识库:{}", repoProjectName, file.getFileName());
-//                try {
-//                    TikaDocumentReader reader = new TikaDocumentReader(new PathResource(file));
-//                    List<Document> documents = reader.get();
-//                    List<Document> documentSplitterList = tokenTextSplitter.apply(documents);
-//
-//                    documents.forEach(doc -> doc.getMetadata().put("knowledge", repoProjectName));
-//
-//                    documentSplitterList.forEach(doc -> doc.getMetadata().put("knowledge", repoProjectName));
-//
-//                    pgVectorStore.accept(documentSplitterList);
-//                } catch (Exception e) {
-//                    log.error("遍历解析路径，上传知识库失败:{}", file.getFileName());
-//                }
-//
-//                return FileVisitResult.CONTINUE;
-//            }
-//
-//            @Override
-//            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-//                log.info("Failed to access file: {} - {}", file.toString(), exc.getMessage());
-//                return FileVisitResult.CONTINUE;
-//            }
-//        });
-//
-//        FileUtils.deleteDirectory(new File(localPath));
-//
-//        RList<String> elements = redissonClient.getList("ragTag");
-//        if (!elements.contains(repoProjectName)) {
-//            elements.add(repoProjectName);
-//        }
-//
-//        git.close();
-//
-//        log.info("遍历解析路径，上传完成:{}", repoUrl);
-//
-//        return Response.<String>builder().code("0000").info("调用成功").build();
-//    }
+    @RequestMapping(value = "analyze_git_repository", method = RequestMethod.POST)
+    @Override
+    public Response<String> analyzeGitRepository(@RequestParam("repoUrl") String repoUrl, @RequestParam("userName") String userName, @RequestParam("token") String token) throws Exception {
+        String localPath = "./git-cloned-repo";
+        String repoProjectName = extractProjectName(repoUrl);
+        log.info("克隆路径：{}", new File(localPath).getAbsolutePath());
+
+        FileUtils.deleteDirectory(new File(localPath));
+
+        Git git = Git.cloneRepository()
+                .setURI(repoUrl)
+                .setDirectory(new File(localPath))
+                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(userName, token))
+                .call();
+
+        Files.walkFileTree(Paths.get(localPath), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                log.info("{} 遍历解析路径，上传知识库:{}", repoProjectName, file.getFileName());
+                try {
+                    TikaDocumentReader reader = new TikaDocumentReader(new PathResource(file));
+                    List<Document> documents = reader.get();
+                    List<Document> documentSplitterList = tokenTextSplitter.apply(documents);
+
+                    documents.forEach(doc -> doc.getMetadata().put("knowledge", repoProjectName));
+
+                    documentSplitterList.forEach(doc -> doc.getMetadata().put("knowledge", repoProjectName));
+
+                    pgVectorStore.accept(documentSplitterList);
+                } catch (Exception e) {
+                    log.error("遍历解析路径，上传知识库失败:{}", file.getFileName());
+                }
+
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                log.info("Failed to access file: {} - {}", file.toString(), exc.getMessage());
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        FileUtils.deleteDirectory(new File(localPath));
+
+        RList<String> elements = redissonClient.getList("ragTag");
+        if (!elements.contains(repoProjectName)) {
+            elements.add(repoProjectName);
+        }
+
+        git.close();
+
+        log.info("遍历解析路径，上传完成:{}", repoUrl);
+
+        return Response.<String>builder().code("0000").info("调用成功").build();
+    }
 
     private String extractProjectName(String repoUrl) {
         String[] parts = repoUrl.split("/");
